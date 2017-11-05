@@ -6,6 +6,8 @@ var numUsers = 1;
 
 io.on('connection', function(socket){
   console.log('a user connected');
+  socket.emit('login');
+
   socket.on('chat message', function(msg){
     socket.broadcast.emit('chat message', msg);
   });
