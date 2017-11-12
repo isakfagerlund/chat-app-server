@@ -1,12 +1,17 @@
 const app = require('express')();
 const http = require('http').Server(app);
 var io = require('socket.io')(http);
+const port = process.env.PORT || 4001;
 
 var numUsers = 1;
 
+var usersOnline = [];
+
 io.on('connection', function(socket){
   console.log('a user connected');
-  socket.emit('login');
+  socket.emit('login', {
+    usersOnline: usersOnline
+  });
 
   socket.on('chat message', function(msg){
     socket.broadcast.emit('chat message', msg);
@@ -14,18 +19,25 @@ io.on('connection', function(socket){
 
   socket.on('add user', function (username){
     socket.username = username;
+    usersOnline.push(socket.username);
     console.log(socket.username);
     socket.broadcast.emit('user joined', {
-      username: socket.username
+      username: socket.username,
+      usersOnline: usersOnline
     });
+    console.log(usersOnline);
   });
 
   socket.on('disconnect', function(){
-    console.log('user disconnected');
+    usersOnline = usersOnline.filter(item => item !== socket.username)
+    socket.broadcast.emit('user left', {
+      username: socket.username,
+      usersOnline: usersOnline
+    });
+    console.log(`${socket.username} disconnected`);
+    console.log(usersOnline);
   });
 });
   
-http.listen(7777, function(){
-  console.log('listening on *:7777');
-});
+http.listen(port, () => console.log(`Listening on ${ port }`));
       
